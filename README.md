@@ -211,6 +211,72 @@ public void onRefreshMsg(RefreshMsg refreshMsg, OmmConsumerEvent event)
 
 Often the Update message will contain a Map with a mixture of Add & Delete action entries - as RICs expire and new RICs are created at certain points during the day.
 
+### Use cases
+I have come across two real life use cases for the BDS / CBR functionality.
+* Maintaining a golden source - a SymbolList consumer is run in snapshot mode several times. The runs take place shortly after midnight - invoking a different BDS each time covering various exchanges. The application then performs a delta with an existing repository to arrive at a list of new and expired RICs. The new and expired lists are then used to update the golden source. Market Data for the RICs themselves is not requested at this time - the golden source is used later during market open times to request Market data for required items.
+* Obtaining snapshots during the day - a SymbolList consumer is run in snapshot mode at two points during the day. Once the complete list of RICs has been obtained, the application then makes MarketPrice snapshot requests for each RIC and the Market Data is captured.
+
+The 1st use case makes the BDS request during non-trading hours mainly because the total number of RICs received runs into a few million and processing them takes time. Also, the daytime requirement is to request Market Data for only a fraction of the RICs in the golden source.  
+In comparison, the 2nd use case involves only a few thousand RICs and the requirement is to capture Market Data for all the RICs returned in the SymbolList.
+
+#### Requesting Market Price Data for the RICs
+If your use case involves requesting Market Price domain Data for all the RICs returned in the SymboList, there is a feature of the SymbolList domain which you could utilise to automate the requesting of all the RICs.   
+The SymbolList section of the RDM Usage Guide (that comes with each API) describes Symbol List Behaviours in more detail. Below is a snippet from the document:
+
+| Element Name | Type   | Default | Description                  |
+|--------------|--------|-------|------------------------------|
+| \:SymbolListBehaviors | ElementList   | ElementList containing ElementEntry of \:DataStreams set to 0.   |Indicates any expected data behavior of individual items that will be opened from the symbol list. If this element is absent, individual streams will not be opened.|
+
+The \:DataStreams element entry can be one of the following values
+
+| Value | Result                |
+|-------|-----------------------|
+|0x0 | The consumer is interested only in getting the names and no data on the individual items of the symbol list. This is the default behavior.|
+|0x1 | The consumer is interested in getting the individual items of the symbol list opened as streaming.|
+|0x2 | The consumer is interested in getting the individual items of the symbol list opened as snapshots.|
+
+So, for example if I modify the ```main()``` method of the above example to include the following, the example will request SymbolList and also receive MarketPrice snapshot data for each of the RICs in the list.
+
+```java
+public static void main(String[] args)
+{
+....    
+	ElementList symbolListBehaviors= EmaFactory.createElementList();
+	ElementList dataStream= EmaFactory.createElementList();
+	
+	dataStream.add(EmaFactory.createElementEntry().uintValue(EmaRdm.ENAME_DATA_STREAMS, 
+		SymbolListDataStreamRequestFlags.SYMBOL_LIST_DATA_SNAPSHOTS));
+
+	symbolListBehaviors.add(EmaFactory.createElementEntry()
+	    .elementList(EmaRdm.ENAME_SYMBOL_LIST_BEHAVIORS, dataStream));
+...
+...
+	consumer.registerClient(EmaFactory.createReqMsg().domainType(EmaRdm.MMT_SYMBOL_LIST)
+		.serviceName("ELEKTRON_DD").name("BDS_VOD").payload(symbolListBehaviors), 
+	        appClient, 0);
+...
+}
+```
+As you can see I am creating an ElementList with entry of DataStream, specifying Data Snapshot as the value, and then I add this to the SymbolListBehaviours ElementList. I then attach this as the **Payload** of the BDS SymbolList Request Message.   
+<br>
+I also modified the onRefreshMsg() handler to process FIELD_LIST rather than just MAP payloads, so that the Market Price data is also output to the console when received.
+```java
+public void onRefreshMsg(RefreshMsg refreshMsg, OmmConsumerEvent event)
+{
+...
+	if (DataType.DataTypes.MAP == refreshMsg.payload().dataType())
+		decode(refreshMsg.payload().map());
+	
+	if (DataType.DataTypes.FIELD_LIST == refreshMsg.payload().dataType())
+		decode(refreshMsg.payload().fieldList(), false);
+...
+}
+
+```
+When I re-ran the modified example, I received back the BDS SymbolList response and a snapshot for each of the items in the SymbolList.
+
+This data auto-request facility is not BDS specific and so can be used generally with SymbolList requests.
+
 ### Closing summary
 
 To summarise the information above:
@@ -223,6 +289,7 @@ To summarise the information above:
 * The payload consists of a Map, where each Map entry's Key is the actual RIC itself and each entry also has an action; Add, Delete or Update
 * A Snapshot request will deliver a list of RICs that match the SQL Terms criteria at that point in time
 * A Streaming request will continue to receive Update Messages as and when RICs expire or new RICs are created
+* It also possible to auto request Snapshot or Streaming data for each RIC in the SymbolList by utilising the Symbol List Behaviours
 
 **Additional Resources**
 
@@ -253,7 +320,6 @@ Forum or contact our Data Helpdesk
 
 
   
-
 
 
 
