@@ -16,9 +16,8 @@ The list of RICs is delivered in a SymbolList (the OMM replacement for the legac
 
 So, for example if I were to make a SymbolList request for .AV.O (Top 25 most active RICs on Nasdaq) from Elektron I would receive back something like this:
 
-![](media/SymboList.jpg)
-
-As you can see the list of RICs is returned as the Key value for each Map entry. In this particular SymbolList we also get a Field showing the Ranking for that instrument.
+![](media/SymboList.jpg)   
+As you can see the list of RICs is returned as the Key value for each Map entry(*I am using the RFA Java OMM Viewer example for the purpose of this tutorial as it provides a convenient GUI interface*). You will note that along with the RIC as the Map Key, I get back a RANK_POS field - as it makes sense in the context of this particular SymbolList (i.e. top 25). For an actual CBR / BDS response you will not get this field (see later).
 
 ### Defining your RIC selection criteria
 
@@ -44,7 +43,7 @@ There a limited set of fields that can be used to form the SQL query for example
 | RIC Name    | Text                 | Wildcard characters as detailed in table below            |
 
 
-You can find an explanation of Record Types in the post about <a href="https://community.developers.thomsonreuters.com/questions/7847/what-are-the-differences-in-recordtype-values.html" target="_blank">Record Type values</a> on this website
+You can find an explanation of Record Types in the Article about <a href="https://developers.thomsonreuters.com/article/elektron-article" target="_blank">Using FID259 (RECORDTYPE)</a> on this website
 
 ##### RIC Name Wildcards
 The RIC Name matching criteria can use the following Wildcarding symbols:
@@ -177,7 +176,7 @@ A breakdown of the above Refresh Message snippet:
 * First we have the 'header' section which confirms various attributes of the Refresh including domain, unique stream ID, Status information, name and the container type
 * Next we have have the Map payload which consists of a Summary section - not particularly useful in the case of a BDS response - just the Domain type repeated again. However, for something like a Level 2 OrderBook (which also uses a Map), the Summary would contain details like Currency, Trade Units, Exchange ID - i.e. values that are common to all the orders in the book
 * Then we have the individual Map entrys   
-    - The action of Add indicates this is a new entry that needs to be added to your local cache   
+    - The action of Add indicates this is a new entry that needs to be added to your local cache - i.e. your in-memory local representation of the Map   
     - If this was an Update Message, it may contain entries with an action of Delete - indicating  the item has expired and should be deleted from local cache (for an OrderBook you can also receive Update actions e.g. if the price or size of an order book entry changes)
     - The Map Key for a BDS SymbolList entry is the actual RIC itself (for an OrderBook the Key could be the Order Price + Order Side)
     - The Field List contains one ore more fields relevant to the Map Entry. Here we just have a permissioning code for the RIC (for an Order Book entry it would the Price, side, size, time of order etc).
