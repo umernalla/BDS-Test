@@ -12,7 +12,7 @@ For example you might want to discover:
 * or you may want all the RICs for Cash Options and Futures Options for the Hong Kong  Exchange 
 * or even a list of all the RICs from all the APAC exchanges
 
-The list of RICs is delivered in a SymbolList (the OMM replacement for the legacy Chains mechanism). This is where the application makes a SymbolList Domain request using a key name and the server responds with a Map structure containing the corresponding RICs.
+The list of RICs is delivered in a SymbolList (the OMM replacement for the legacy Chains mechanism - see <a href="https://developers.thomsonreuters.com/article/elektron-article-1#AboutChains" target="_blank">About Chains</a>  for more details). This is where the application makes a SymbolList Domain request using a key name and the server responds with a Map structure containing the corresponding RICs.
 
 So, for example if I were to make a SymbolList request for .AV.O (Top 25 most active RICs on Nasdaq) from Elektron I would receive back something like this:
 
@@ -127,7 +127,7 @@ You will also note that I have specified **BDS\_VOD** as the name of the SymbolL
 
 Another key difference between MarketPrice data and a SymbolList is that the SymbolList response is in the form of a Map - rather than the simpler FieldList of the MarketPrice response.
 
-IF you are familiar with OMM Map you can skip the following section and move onto the Results.   
+If you are familiar with OMM Map you can skip the following section and move onto the Results.   
 
 You can read in more detail about OMM Map in the Developer Guides or API Concept Guides that come with our Elektron and RFA API packages. However, the following should provide a quick overview:   
 
@@ -175,7 +175,7 @@ An example of a SymbolList Refresh response trace below (truncated) should help 
 A breakdown of the above Refresh Message snippet:
 * First we have the 'header' section which confirms various attributes of the Refresh including domain, unique stream ID, Status information, name and the container type
 * Next we have have the Map payload which consists of a Summary section - not particularly useful in the case of a BDS response - just the Domain type repeated again. However, for something like a Level 2 OrderBook (which also uses a Map), the Summary would contain details like Currency, Trade Units, Exchange ID - i.e. values that are common to all the orders in the book
-* Then we have the individual Map entrys   
+* Then we have the individual Map entries   
     - The action of Add indicates this is a new entry that needs to be added to your local cache - i.e. your in-memory local representation of the Map   
     - If this was an Update Message, it may contain entries with an action of Delete - indicating  the item has expired and should be deleted from local cache (for an OrderBook you can also receive Update actions e.g. if the price or size of an order book entry changes)
     - The Map Key for a BDS SymbolList entry is the actual RIC itself (for an OrderBook the Key could be the Order Price + Order Side)
@@ -288,7 +288,7 @@ To summarise the information above:
 * The payload consists of a Map, where each Map entry's Key is the actual RIC itself and each entry also has an action; Add, Delete or Update
 * A Snapshot request will deliver a list of RICs that match the SQL Terms criteria at that point in time
 * A Streaming request will continue to receive Update Messages as and when RICs expire or new RICs are created
-* It also possible to auto request Snapshot or Streaming data for each RIC in the SymbolList by utilising the Symbol List Behaviours
+* It also possible to auto-request Snapshot or Streaming data for each RIC in the SymbolList by utilising the Symbol List Behaviours
 
 **Additional Resources**
 
