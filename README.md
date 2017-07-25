@@ -12,16 +12,24 @@ For example you might want to discover:
 * or you may want all the RICs for Cash Options and Futures Options for the Hong Kong  Exchange 
 * or even a list of all the RICs from all the APAC exchanges
 
-The list of RICs is delivered in a SymbolList (the OMM replacement for the legacy Chains mechanism - see <a href="https://developers.thomsonreuters.com/article/elektron-article-1#AboutChains" target="_blank">About Chains</a>  for more details). This is where the application makes a SymbolList Domain request using a key name and the server responds with a Map structure containing the corresponding RICs.
+From a developer's perspective, your *interface* for utilising CBR / BDS functionality is the OMM SymbolList domain. You can read in more detail about OMM SymbolLists in the Developer Guides or API Concept Guides that come with our Elektron and RFA API packages. However, the following should provide a quick overview.
 
-So, for example if I were to make a SymbolList request for .AV.O (Top 25 most active RICs on Nasdaq) from Elektron I would receive back something like this:
+#### SymbolList domain
+
+The SymbolList domain is the OMM replacement for the legacy Chains mechanism (see <a href="https://developers.thomsonreuters.com/article/elektron-article-1#AboutChains" target="_blank">AboutChains</a>  for more details). This is where the application makes a SymbolList Domain request using a SymbolList name (in place of a RIC Code) and the server responds with a Map structure containing the corresponding RICs.
+
+So, for example if I were to make a SymbolList request for '**.AV.O**' (Top 25 most active RICs on Nasdaq) from Elektron I would receive back something like this:
 
 ![](media/SymboList.jpg)   
-As you can see the list of RICs is returned as the Key value for each Map entry(*I am using the RFA Java OMM Viewer example for the purpose of this tutorial as it provides a convenient GUI interface*). You will note that along with the RIC as the Map Key, I get back a RANK_POS field - as it makes sense in the context of this particular SymbolList (i.e. top 25). For an actual CBR / BDS response you will not get this field (see later).
+As you can see a list of RICs is returned as the Key value for each Map entry (*I am using the RFA Java OMM Viewer example for the purpose of this tutorial as it provides a convenient GUI interface*). You will note that along with the RIC as the Map Key, I get back a RANK_POS field - as it makes sense in the context of this particular SymbolList (i.e. top 25). For an actual CBR / BDS response you will not get this field (see later).
+
+Just to be clear '**.AV.O**' is not a CBR / BDS - it just happens to be a SymbolList name that is supported by the Elektron realtime data service. 
+
+Now that I have summarised SymbolList, I can move on to explaining the CBR / BDS mechanism.
 
 ### Defining your RIC selection criteria
 
-I mentioned earlier that you can make a Criteria Based Request by specifying a set of values to match against. How do you go about doing this and what types of Criteria can you specify?
+I mentioned earlier that you can define a Criteria Based Request by specifying a set of values to match against. How do you go about doing this and what types of Criteria can you specify?
 
 #### Technical Prerequisites ###
 To define the match criteria you will need access to the Elektron Edge console application. So, the first thing  you need to do is speak to your Market Data team and confirm that they will be able to create what is known as a **BDS Term** on your organisation's Edge devices.
@@ -53,7 +61,7 @@ The RIC Name matching criteria can use the following Wildcarding symbols:
 | Single Character  | '\_' | IBM.\_ |All RICs with “IBM.” as prefix and followed by any single characters. e.g. IBM.O, IBM.N, IBM.t |
 | Multiple characters | '%'|  %.HK  | All RICs from HK exchange with “.HK” as suffix |
 | Range  | []         | 800[2-6].HK | Represents RICs 8002.HK, 8003.HK, 8004.HK, 8005.HK, and 8006.HK | 
-| Negate    | '^'     | _[^]%       | All RICs that are not chain records (i.e. not 0#GC:, 0#.FTSE, 1#.HSI, etc)|
+| Negate    | '^'     | \_[^#]%       | All RICs that are not chain records (i.e. not 0#GC:, 0#.FTSE, 1#.HSI, etc)|
 
 ### Using the Edge console
 Access to the Edge console is usually limited to your site's Market Data admin team. However, if they are not familiar with its use, the following should help.
@@ -105,7 +113,7 @@ The above SQL Term will match on all RICs that begin with \'**VOD.**\' - which I
 
 #### Requesting a BDS
 
-As mentioned above I am going to use ***example270__SymbolList*** which can be found in the ```Ema\Src\examples\java\com\thomsonreuters\ema\examples\training\consumer\series200``` folder of the Elektron SDK package.
+As mentioned above I am going to use ***example270__SymbolList*** which can be found in the ```Ema\Src\examples\java\com\thomsonreuters\ema\examples\training\consumer\series200``` folder of the Elektron SDK package (a similar 270_SymbolList example is also available in the C++ version of the Elektron SDK). 
 
 When requesting the more commonly used MarketPrice data you specify a Domain of MARKET_PRICE in the Request Messsage e.g.
 
@@ -123,7 +131,7 @@ consumer.registerClient(EmaFactory.createReqMsg().domainType(EmaRdm.MMT_SYMBOL_L
     .serviceName("ELEKTRON_DD").name("BDS_VOD"), appClient, 0);
 
 ```
-You will also note that I have specified **BDS\_VOD** as the name of the SymbolList that I am requesting.
+You will also note that I have changed the name of the of the SymbolList that I am requesting to **BDS\_VOD**.
 
 Another key difference between MarketPrice data and a SymbolList is that the SymbolList response is in the form of a Map - rather than the simpler FieldList of the MarketPrice response.
 
@@ -319,7 +327,6 @@ Forum or contact our Data Helpdesk
 
 
   
-
 
 
 
